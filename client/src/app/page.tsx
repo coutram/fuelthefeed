@@ -1,5 +1,7 @@
 import Image from "next/image";
 
+process.removeAllListeners('warning');
+
 export default function Home() {
   const year = new Date().getFullYear();
   return (
@@ -13,7 +15,7 @@ export default function Home() {
           <a href="#how-it-works" className="text-[#0c2937] font-semibold px-5 py-2 rounded-full hover:bg-pink-500/80 hover:text-white transition">How it Works</a>
           <a href="#get-rewarded" className="text-[#0c2937] font-semibold px-5 py-2 rounded-full hover:bg-pink-500/80 hover:text-white transition">Get Rewarded</a>
           <a href="#team" className="text-[#0c2937] font-semibold px-5 py-2 rounded-full hover:bg-pink-500/80 hover:text-white transition">Team</a>
-          <a href="/login" className="bg-pink-500 hover:bg-pink-600 text-white font-bold px-6 py-2 rounded-full shadow transition">Join Today</a>
+          <a href="/login" className="bg-pink-500 hover:bg-pink-600 text-white font-bold px-6 py-2 rounded-full shadow transition">Join Today / Login</a>
         </div>
       </nav>
       {/* Spacer for fixed nav */}
@@ -82,12 +84,12 @@ export default function Home() {
       >
         {/* Background Images */}
         <div className="absolute inset-0 w-full h-full z-0">
-          <img
+          <Image
             src="/influencer1.jpg"
             alt="Creators"
             className="object-cover w-full h-full opacity-60 absolute left-0 top-0"
           />
-          <img
+          <Image
             src="/influencer2.jpg"
             alt="Community"
             className="object-cover w-full h-full opacity-60 absolute right-0 bottom-0"
