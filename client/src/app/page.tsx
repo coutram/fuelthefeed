@@ -87,11 +87,15 @@ export default function Home() {
           <Image
             src="/influencer1.jpg"
             alt="Creators"
+            width={1920}
+            height={1080}
             className="object-cover w-full h-full opacity-60 absolute left-0 top-0"
           />
           <Image
             src="/influencer2.jpg"
             alt="Community"
+            width={1920}
+            height={1080}
             className="object-cover w-full h-full opacity-60 absolute right-0 bottom-0"
           />
           {/* Black overlay for readability */}

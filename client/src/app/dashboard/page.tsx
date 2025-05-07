@@ -12,7 +12,9 @@ interface Campaign {
 }
 
 export default function DashboardPage() {
-  const { connected } = useWallet();
+  const { account, connected } = useWallet();
+  console.log(account);
+  console.log(connected);
 
   // Mock data - replace with actual data from your backend
   const campaigns: Campaign[] = [
@@ -34,7 +36,7 @@ export default function DashboardPage() {
     },
   ];
 
-  if (!connected) {
+  if (!connected || !account) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0c2937] via-[#1e3a4c] to-[#0c2937] px-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md text-center">
