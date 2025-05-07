@@ -21,3 +21,7 @@ client/.env.test.local
 client/.env.production.local
 
 client/.next/
+
+
+server/node_modules/
+server/.env
