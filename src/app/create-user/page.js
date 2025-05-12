@@ -2,11 +2,13 @@
 import { useSearchParams } from 'next/navigation'
 import { useState } from 'react';
 import { apiFetch } from '../api'; // Import the apiFetch function
+import { useRouter } from 'next/navigation'; // Import useRouter
 import { Suspense } from 'react';
 
 // Create a client component that uses useSearchParams
 function CreateUserForm() {
   const searchParams = useSearchParams()
+  const router = useRouter(); // Initialize router here
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -20,7 +22,7 @@ function CreateUserForm() {
         method: 'POST',
         body: JSON.stringify({ firstName, lastName, email, walletId }), // Use walletId from state
       });
-      router.push('/dashboard'); // Redirect to dashboard after successful creation
+      router.push('/dashboard'); // Use router to navigate after successful creation
     } catch (error) {
       console.error('Failed to create user:', error);
     }

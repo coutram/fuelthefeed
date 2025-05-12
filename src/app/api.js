@@ -1,8 +1,7 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001';
-console.log(BASE_URL);
 
 export const apiFetch = async (endpoint, options = {}) => {
-  console.log(`${BASE_URL}${endpoint}`);
+
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers: {
