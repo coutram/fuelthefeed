@@ -10,7 +10,7 @@ import Link from 'next/link';
 function WalletConnectContent() {
   const { connect, disconnect, account, connected, wallets } = useWallet();
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); 
 
   console.log(account);
   console.log(connected);
@@ -53,7 +53,12 @@ function WalletConnectContent() {
     <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md flex flex-col items-center">
       <h1 className="text-3xl font-bold text-gray-900 mb-6">Join Fuel the Feed</h1>
       <Image src="/large-logo.png" alt="Fuel the Feed Logo" width={420} height={420} className="mb-6" />
-      {!connected ? (
+      {loading ? (
+        <div className="flex flex-col items-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mb-2"></div>
+          <p className="text-gray-600">Checking account...</p>
+        </div>
+      ) : !connected ? (
         <div className="flex flex-col items-center">
           <h2 className="mb-4 text-xl font-bold text-gray-800">Login or Create Account</h2>
           <div className="flex flex-wrap justify-center">
@@ -66,7 +71,6 @@ function WalletConnectContent() {
                 Connect {wallet.name}
               </button>
             ))}
-            
           </div>
         </div>
       ) : (
