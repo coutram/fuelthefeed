@@ -1,6 +1,5 @@
-const BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://fuelthefeed-server.vercel.app' 
-  : 'http://localhost:4001';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001';
+console.log(BASE_URL);
 
 export const apiFetch = async (endpoint, options = {}) => {
   console.log(`${BASE_URL}${endpoint}`);

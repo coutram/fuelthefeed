@@ -12,8 +12,7 @@ function WalletConnectContent() {
   const router = useRouter();
   const [loading, setLoading] = useState(false); 
 
-  console.log(account);
-  console.log(connected);
+
 
   useEffect(() => {
     const checkUser = async () => {
