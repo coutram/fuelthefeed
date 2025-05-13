@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { useRouter } from 'next/navigation';
-import { apiFetch } from '../api'; 
+import { getUserByWalletId } from '../api';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -17,7 +17,7 @@ function WalletConnectContent() {
       if (connected && account) {
         setLoading(true);
         try {
-          const data = await fetchUserByWallet(account.address);
+          const data = await getUserByWalletId(account.address);
 
           const user = data.data;
 
@@ -35,17 +35,6 @@ function WalletConnectContent() {
     };
     checkUser();
   }, [connected, account, router]);
-
-  const fetchUserByWallet = async (walletId) => {
-    try {
-      const response = await apiFetch(`/api/users/wallet/${walletId}`);
-
-      return response;
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      throw error;
-    }
-  };
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#0c2937] via-[#1e3a4c] to-[#0c2937] px-4">

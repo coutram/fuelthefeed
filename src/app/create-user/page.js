@@ -1,7 +1,7 @@
 "use client";
 import { useSearchParams } from 'next/navigation'
 import { useState } from 'react';
-import { apiFetch } from '../api'; // Import the apiFetch function
+import { createUser } from '../api'; // Import the createUser function
 import { useRouter } from 'next/navigation'; // Import useRouter
 import { Suspense } from 'react';
 
@@ -18,11 +18,8 @@ function CreateUserForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await apiFetch('/api/users', {
-        method: 'POST',
-        body: JSON.stringify({ firstName, lastName, email, walletId }), // Use walletId from state
-      });
-      router.push('/dashboard'); // Use router to navigate after successful creation
+      await createUser({ firstName, lastName, email, walletId }); // Use createUser from api.js
+      router.push('/dashboard'); // Navigate after successful creation
     } catch (error) {
       console.error('Failed to create user:', error);
     }

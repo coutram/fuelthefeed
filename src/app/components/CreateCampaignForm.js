@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import './CreateCampaignForm.css'; // Import your CSS for styling
+import { createCampaign } from '../api'; // Import the API function
 
 const CreateCampaignForm = () => {
     const [formData, setFormData] = useState({
@@ -22,11 +23,16 @@ const CreateCampaignForm = () => {
         });
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // Handle form submission logic here
-        console.log('Form Data:', formData);
-        // You can send formData to your API or perform other actions
+        try {
+            const response = await createCampaign(formData); // Call the API function
+            console.log('Campaign created successfully:', response);
+            // Optionally, you can reset the form or close the modal here
+        } catch (error) {
+            console.error('Error creating campaign:', error);
+            // Handle error (e.g., show a notification)
+        }
     };
 
     return (
