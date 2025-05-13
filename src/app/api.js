@@ -1,7 +1,6 @@
 const BASE_URL = process.env.SERVER_URL || 'http://localhost:3001';
 
 export const apiFetch = async (endpoint, options = {}) => {
-
   const response = await fetch(`${BASE_URL}${endpoint}`, {
     ...options,
     headers: {
@@ -9,10 +8,13 @@ export const apiFetch = async (endpoint, options = {}) => {
       ...(options.headers || {}),
     },
   });
+  console.log('Response:', response);
 
   if (!response.ok) {
     throw new Error(`API call failed: ${response.statusText}`);
   }
+
+  
 
   return response.json();
 };

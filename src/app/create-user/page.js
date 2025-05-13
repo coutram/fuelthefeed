@@ -18,7 +18,7 @@ function CreateUserForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await apiFetch('/api/user', {
+      await apiFetch('/api/users', {
         method: 'POST',
         body: JSON.stringify({ firstName, lastName, email, walletId }), // Use walletId from state
       });

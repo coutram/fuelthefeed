@@ -1,6 +1,10 @@
 'use client';
+
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import Link from 'next/link';
+import React, { useState } from 'react';
+import Modal from '../components/Modal';
+import CreateCampaignForm from '../components/CreateCampaignForm';
 
 interface Campaign {
   id: string;
@@ -13,8 +17,7 @@ interface Campaign {
 
 export default function DashboardPage() {
   const { account, connected } = useWallet();
-  console.log(account);
-  console.log(connected);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Mock data - replace with actual data from your backend
   const campaigns: Campaign[] = [
@@ -35,6 +38,9 @@ export default function DashboardPage() {
       createdAt: '2024-03-14',
     },
   ];
+
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
 
   if (!connected || !account) {
     return (
@@ -58,8 +64,8 @@ export default function DashboardPage() {
             <h1 className="text-3xl font-bold text-white mb-2">Your Campaigns</h1>
             <p className="text-gray-300">Manage and track your influencer campaigns</p>
           </div>
-          <Link
-            href="/campaigns/create"
+          <button
+            onClick={openModal}
             className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg transition flex items-center"
           >
             <svg
@@ -77,7 +83,7 @@ export default function DashboardPage() {
               />
             </svg>
             Create Campaign
-          </Link>
+          </button>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -158,6 +164,10 @@ export default function DashboardPage() {
             </div>
           </div>
         )}
+
+        <Modal isOpen={isModalOpen} onClose={closeModal}>
+          <CreateCampaignForm />
+        </Modal>
       </div>
     </main>
   );

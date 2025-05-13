@@ -12,14 +12,14 @@ function WalletConnectContent() {
   const router = useRouter();
   const [loading, setLoading] = useState(false); 
 
-
-
   useEffect(() => {
     const checkUser = async () => {
       if (connected && account) {
         setLoading(true);
         try {
-          const user = await fetchUserByWallet(account.address);
+          const data = await fetchUserByWallet(account.address);
+
+          const user = data.data;
 
           if (!user || Object.keys(user).length === 0) { 
             router.push(`/create-user?walletId=${account.address}`);
@@ -38,8 +38,8 @@ function WalletConnectContent() {
 
   const fetchUserByWallet = async (walletId) => {
     try {
-      const response = await apiFetch(`/api/user/wallet/${walletId}`);
-      console.log('Response Code:', response.status);
+      const response = await apiFetch(`/api/users/wallet/${walletId}`);
+
       return response;
     } catch (error) {
       console.error('Error fetching user:', error);
