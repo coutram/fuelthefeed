@@ -13,7 +13,7 @@ const Dashboard = () => {
             <h1>Dashboard</h1>
             <button onClick={openModal}>Create Campaign</button>
 
-            <Modal isOpen={isModalOpen} onClose={closeModal}>
+            <Modal isOpen={isModalOpen} onClose={closeModal} title="Create Campaign">
                 <CreateCampaignForm />
             </Modal>
         </div>

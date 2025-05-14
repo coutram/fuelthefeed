@@ -165,7 +165,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <Modal isOpen={isModalOpen} onClose={closeModal}>
+        <Modal isOpen={isModalOpen} onClose={closeModal} title="Create Campaign">
           <CreateCampaignForm />
         </Modal>
       </div>

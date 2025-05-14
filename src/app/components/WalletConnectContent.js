@@ -24,6 +24,7 @@ function WalletConnectContent() {
           if (!user || Object.keys(user).length === 0) { 
             router.push(`/create-user?walletId=${account.address}`);
           } else {
+            console.log('User already exists:', user);
             router.push('/dashboard');
           }
         } catch (error) {
