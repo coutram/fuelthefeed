@@ -64,6 +64,26 @@ export const getCampaignById = async (id) => {
   return await apiFetch(`${CAMPAIGN_API_URL}/${id}`);
 };
 
+export const generateCampaignBrief = async (campaignId) => {
+  return await apiFetch(`${CAMPAIGN_API_URL}/${campaignId}/generate-brief`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({})
+  });
+};
+
+export const approveCampaignBrief = async (campaignId) => {
+  return await apiFetch(`${CAMPAIGN_API_URL}/${campaignId}/approve-brief`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({})
+  });
+};
+
 
 
 

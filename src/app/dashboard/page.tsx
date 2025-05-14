@@ -2,45 +2,55 @@
 
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import Link from 'next/link';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '../components/Modal';
 import CreateCampaignForm from '../components/CreateCampaignForm';
+import { getAllCampaigns } from '../api';
 
-interface Campaign {
-  id: string;
-  title: string;
-  status: 'active' | 'draft' | 'completed';
-  participants: number;
+type Campaign = {
+  _id: string;
+  name: string;
+  flightStart: string;
+  flightEnd: string;
   budget: number;
   createdAt: string;
+  // Add other fields as needed
+};
+
+function getCampaignStatus(flightStart: string, flightEnd: string) {
+  const now = new Date();
+  const start = new Date(flightStart);
+  const end = new Date(flightEnd);
+
+  if (now < start) return 'recruiting';
+  if (now >= start && now <= end) return 'active';
+  return 'ended';
 }
 
 export default function DashboardPage() {
   const { account, connected } = useWallet();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - replace with actual data from your backend
-  const campaigns: Campaign[] = [
-    {
-      id: '1',
-      title: 'Summer Fashion Collection',
-      status: 'active',
-      participants: 45,
-      budget: 5000,
-      createdAt: '2024-03-15',
-    },
-    {
-      id: '2',
-      title: 'Tech Gadgets Review',
-      status: 'draft',
-      participants: 0,
-      budget: 3000,
-      createdAt: '2024-03-14',
-    },
-  ];
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
+  useEffect(() => {
+    async function fetchCampaigns() {
+      setLoading(true);
+      try {
+        const data = await getAllCampaigns();
+        setCampaigns(data);
+      } catch (e) {
+        console.error('Error fetching campaigns:', e);
+        setCampaigns([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchCampaigns();
+  }, []);
 
   if (!connected || !account) {
     return (
@@ -65,7 +75,7 @@ export default function DashboardPage() {
             <p className="text-gray-300">Manage and track your influencer campaigns</p>
           </div>
           <button
-            onClick={openModal}
+            onClick={handleOpenModal}
             className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg transition flex items-center"
           >
             <svg
@@ -86,55 +96,55 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {campaigns.map((campaign) => (
-            <div
-              key={campaign.id}
-              className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <h3 className="text-xl font-bold text-gray-900">{campaign.title}</h3>
-                <span
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    campaign.status === 'active'
-                      ? 'bg-green-100 text-green-800'
-                      : campaign.status === 'draft'
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
-                >
-                  {campaign.status}
-                </span>
-              </div>
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Participants</span>
-                  <span className="font-medium text-gray-900">{campaign.participants}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Budget</span>
-                  <span className="font-medium text-gray-900">${campaign.budget}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Created</span>
-                  <span className="font-medium text-gray-900">
-                    {new Date(campaign.createdAt).toLocaleDateString()}
+        {loading ? (
+          <div className="text-center text-white">Loading campaigns...</div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {campaigns.map((campaign) => (
+              <div
+                key={campaign._id}
+                className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <h3 className="text-xl font-bold text-gray-900">{campaign.name}</h3>
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${
+                      getCampaignStatus(campaign.flightStart, campaign.flightEnd) === 'active'
+                        ? 'bg-green-100 text-green-800'
+                        : getCampaignStatus(campaign.flightStart, campaign.flightEnd) === 'recruiting'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}
+                  >
+                    {getCampaignStatus(campaign.flightStart, campaign.flightEnd)}
                   </span>
                 </div>
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Budget</span>
+                    <span className="font-medium text-gray-900">${campaign.budget?.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Created</span>
+                    <span className="font-medium text-gray-900">
+                      {campaign.createdAt ? new Date(campaign.createdAt).toLocaleDateString() : ''}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-6 flex justify-end">
+                  <Link
+                    href={`/campaigns/${campaign._id}`}
+                    className="text-pink-500 hover:text-pink-600 font-medium"
+                  >
+                    View Details →
+                  </Link>
+                </div>
               </div>
-              <div className="mt-6 flex justify-end">
-                <Link
-                  href={`/campaigns/${campaign.id}`}
-                  className="text-pink-500 hover:text-pink-600 font-medium"
-                >
-                  View Details →
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
-        {campaigns.length === 0 && (
+        {campaigns.length === 0 && !loading && (
           <div className="text-center py-12">
             <div className="bg-white rounded-xl shadow-lg p-8 max-w-md mx-auto">
               <h3 className="text-xl font-bold text-gray-900 mb-2">No Campaigns Yet</h3>
@@ -165,8 +175,12 @@ export default function DashboardPage() {
           </div>
         )}
 
-        <Modal isOpen={isModalOpen} onClose={closeModal} title="Create Campaign">
-          <CreateCampaignForm />
+        <Modal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          title="Fuel Your Feed Campaign"
+        >
+          <CreateCampaignForm onClose={handleCloseModal} />
         </Modal>
       </div>
     </main>
