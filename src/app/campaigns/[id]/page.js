@@ -36,6 +36,9 @@ export default function CampaignDetails() {
 
       // Set campaign status
       setCampaignStatus(getCampaignStatus(data.flightStart, data.flightEnd));
+
+      // When you generate the brief:
+      setTwitterPost(generateTwitterPost(data));
     } catch (error) {
       console.error('Error fetching campaign:', error);
       setError(error.message);
@@ -58,7 +61,8 @@ export default function CampaignDetails() {
       if (response.campaignBrief) {
         setCampaign(response);
         setBriefStatus('completed');
-        setTwitterPost(generateTwitterPost(response));
+        const generatedPost = generateTwitterPost(response);
+        setTwitterPost(generatedPost);
       }
     } catch (error) {
       console.error('Error generating brief:', error);
@@ -350,7 +354,7 @@ For more information or to apply, please contact us.
               <div className="mt-8">
                 <h3 className="text-lg font-semibold mb-2">Twitter Post Preview</h3>
                 <div className="bg-white border border-gray-200 rounded-lg p-4">
-                  <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700">
+                  <pre className="bg-gray-100 rounded p-4 w-full text-sm text-gray-800 mb-4 whitespace-pre-wrap break-words">
                     {twitterPost}
                   </pre>
                   <button
@@ -419,13 +423,13 @@ For more information or to apply, please contact us.
             <div className="w-full max-w-xl bg-white rounded-xl shadow-lg p-8 mt-8 flex flex-col items-center">
               <img src="/twitter-x-logo.png" alt="Twitter/X" className="w-12 h-12 mb-4" />
               <h3 className="text-lg font-bold mb-2">Share this on Twitter/X</h3>
-              <pre className="bg-gray-100 rounded p-4 w-full text-sm text-gray-800 mb-4">{twitterPost}</pre>
+              <pre className="bg-gray-100 rounded p-4 w-full text-sm text-gray-800 mb-4 whitespace-pre-wrap break-words">
+                {twitterPost || "No Twitter post generated yet."}
+              </pre>
               <button
-                onClick={() => {
-                  navigator.clipboard.writeText(twitterPost);
-                  // Optionally show a toast/notification here
-                }}
+                onClick={() => navigator.clipboard.writeText(twitterPost)}
                 className="px-6 py-2 bg-pink-500 text-white rounded-lg font-semibold hover:bg-pink-600 transition"
+                disabled={!twitterPost}
               >
                 Copy Post
               </button>
