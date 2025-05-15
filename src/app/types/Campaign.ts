@@ -8,5 +8,7 @@ export type Campaign = {
   description: string;
   campaignBrief: string;
   kolType: string;
+  twitterPost: string;
+  emailContent: string;
   // Add other fields as needed
 };

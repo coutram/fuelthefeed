@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Campaign } from '@/app/types/Campaign';
+// import { getCampaignById } from '../../api';
+import { useParams } from 'next/navigation';
 
 type Props = {
   campaign: Campaign;
+  // twitterPost: string;
+  // emailContent: string;
   isApproved: boolean;
   onRegenerate: () => void;
   onApprove: () => void;
@@ -13,6 +17,8 @@ type Props = {
 
 export default function CampaignBriefTab({
   campaign,
+  // twitterPost,
+  // emailContent,
   isApproved,
   onRegenerate,
   onApprove,
@@ -20,6 +26,10 @@ export default function CampaignBriefTab({
   loading,
   error,
 }: Props) {
+  // const [campaignState, setCampaignState] = useState<Campaign | null>(null);
+  // const [loadingState, setLoadingState] = useState(true);
+  const { id } = useParams();
+  
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="flex justify-between items-center mb-4">
@@ -58,12 +68,44 @@ export default function CampaignBriefTab({
         </div>
       )}
       {campaign.campaignBrief ? (
-        <div className="prose max-w-none bg-gray-50 p-6 rounded-lg whitespace-pre-wrap break-words">
-          {campaign.campaignBrief}
+        <div className="space-y-8">
+          {/* Twitter Post Preview */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Twitter Post Preview</h3>
+            <div className="bg-gray-100 rounded p-4 w-full text-sm text-gray-800 mb-2 whitespace-pre-wrap break-words">
+              {campaign.twitterPost}
+            </div>
+            <button
+              onClick={() => navigator.clipboard.writeText(campaign.twitterPost)}
+              className="px-4 py-2 bg-pink-500 text-white rounded hover:bg-pink-600"
+            >
+              Copy Twitter Post
+            </button>
+          </div>
+          {/* Email Preview */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Email Preview</h3>
+            <div className="bg-gray-100 rounded p-4 w-full text-sm text-gray-800 mb-2 whitespace-pre-wrap break-words">
+              {formatBriefForEmail(campaign)}
+            </div>
+            <button
+              onClick={() => navigator.clipboard.writeText(formatBriefForEmail(campaign))}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Copy Email
+            </button>
+          </div>
         </div>
       ) : (
         <div className="text-gray-500">No brief generated yet.</div>
       )}
     </div>
   );
+}
+
+// Helper function
+function formatBriefForEmail(campaign) {
+  return campaign.campaignBrief
+    ? `Campaign: ${campaign.name}\n\n${campaign.campaignBrief}\n\nFor more info, contact us.`
+    : '';
 }

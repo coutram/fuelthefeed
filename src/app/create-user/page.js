@@ -1,6 +1,6 @@
 "use client";
 import { useSearchParams } from 'next/navigation'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createUser } from '../api'; // Import the createUser function
 import { useRouter } from 'next/navigation'; // Import useRouter
 import { Suspense } from 'react';
@@ -18,12 +18,37 @@ function CreateUserForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await createUser({ firstName, lastName, email, walletId }); // Use createUser from api.js
-      router.push('/dashboard'); // Navigate after successful creation
+      const formData = new FormData(e.target);
+      const userData = {
+        firstName,
+        lastName,
+        email,
+        walletId,
+        role: formData.get('role'),
+      };
+      await createUser(userData); // Use createUser from api.js
+      if (userData.role === 'creator') {
+        router.push('/creator-onboarding');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (error) {
       console.error('Failed to create user:', error);
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'creator') {
+        router.push('/creator-onboarding');
+      } else if (user.role === 'brand') {
+        router.push('/dashboard');
+      } else {
+        // Optionally handle unknown roles
+        alert('Unknown user role!');
+      }
+    }
+  }, [user, router]);
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md flex flex-col items-center">
@@ -53,6 +78,23 @@ function CreateUserForm() {
           required
           className="border p-2 mb-4 w-full"
         />
+        <div>
+          <label htmlFor="role" className="block text-sm font-semibold text-gray-700 mb-1">
+            Role
+          </label>
+          <select
+            id="role"
+            name="role"
+            required
+            className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500 transition"
+            defaultValue=""
+          >
+            <option value="" disabled>Select a role</option>
+            <option value="brand">Brand</option>
+            <option value="creator">Creator</option>
+          </select>
+          <p className="text-xs text-gray-400 mt-1">Choose whether this user is a brand or a creator.</p>
+        </div>
         <button type="submit" className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg transition">
           Create Account
         </button>

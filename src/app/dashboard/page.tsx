@@ -6,16 +6,8 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../components/Modal';
 import CreateCampaignForm from '../components/CreateCampaignForm';
 import { getAllCampaigns } from '../api';
-
-type Campaign = {
-  _id: string;
-  name: string;
-  flightStart: string;
-  flightEnd: string;
-  budget: number;
-  createdAt: string;
-  // Add other fields as needed
-};
+import { useRouter } from 'next/navigation';
+import { Campaign } from '../types/Campaign';
 
 function getCampaignStatus(flightStart: string, flightEnd: string) {
   const now = new Date();
@@ -32,6 +24,7 @@ export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
@@ -51,6 +44,12 @@ export default function DashboardPage() {
     }
     fetchCampaigns();
   }, []);
+
+  useEffect(() => {
+    if (account && account.role !== 'brand') {
+      router.replace('/creator-dashboard');
+    }
+  }, [account, router]);
 
   if (!connected || !account) {
     return (

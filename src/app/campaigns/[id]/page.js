@@ -18,6 +18,7 @@ export default function CampaignDetailsPage() {
   const [briefLoading, setBriefLoading] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const [twitterPost, setTwitterPost] = useState('');
+  const [emailContent, setEmailContent] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -27,8 +28,10 @@ export default function CampaignDetailsPage() {
         const data = await getCampaignById(id);
         setCampaign(data);
         setIsApproved(data.briefApproved || false);
-        // If you generate the twitter post from the campaign, do it here:
-        setTwitterPost(data.twitterPost || '');
+        if (data.campaignBrief) {
+          setTwitterPost(generateTwitterPost(data));
+          setEmailContent(formatBriefForEmail(data));
+        }
       } catch (e) {
         console.error('Error fetching campaign:', e);
         setError('Failed to load campaign');
@@ -48,6 +51,7 @@ export default function CampaignDetailsPage() {
       setCampaign(response);
       setIsApproved(false);
       setTwitterPost(response.twitterPost || '');
+      setEmailContent(response.emailContent || '');
       setNotification('Brief regenerated!');
     } catch (e) {
       console.error('Error regenerating brief:', e);
@@ -65,6 +69,8 @@ export default function CampaignDetailsPage() {
       const response = await approveCampaignBrief(id);
       setIsApproved(true);
       setCampaign(response);
+      setTwitterPost(response.twitterPost || '');
+      setEmailContent(response.emailContent || '');
       setNotification('Brief approved!');
     } catch (e) {
       console.error('Error approving brief:', e);
@@ -113,6 +119,8 @@ export default function CampaignDetailsPage() {
           onCopy={handleCopyBrief}
           loading={briefLoading}
           error={error}
+          twitterPost={twitterPost}
+          emailContent={emailContent}
         />
       )}
       {activeTab === 'recruit' && (
@@ -122,6 +130,18 @@ export default function CampaignDetailsPage() {
       )}
     </div>
   );
+}
+
+function generateTwitterPost(campaign) {
+  return campaign.campaignBrief
+    ? `🎯 Looking for creators for our ${campaign.name} campaign!\n\n${campaign.campaignBrief}\n\nDM to apply! #CreatorEconomy #InfluencerMarketing`
+    : '';
+}
+
+function formatBriefForEmail(campaign) {
+  return campaign.campaignBrief
+    ? `Campaign: ${campaign.name}\n\n${campaign.campaignBrief}\n\nFor more info, contact us.`
+    : '';
 }
 
 
