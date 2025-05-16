@@ -168,8 +168,8 @@ export default function DashboardPage() {
               <p className="text-gray-600 mb-6">
                 Create your first campaign to start working with influencers
               </p>
-              <Link
-                href="/campaigns/create"
+              <button
+                onClick={handleOpenModal}
                 className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg transition inline-flex items-center"
               >
                 <svg
@@ -187,7 +187,7 @@ export default function DashboardPage() {
                   />
                 </svg>
                 Create Your First Campaign
-              </Link>
+              </button>
             </div>
           </div>
         )}

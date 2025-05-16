@@ -8,7 +8,7 @@ import CampaignDetailsTab from './CampaignDetailsTab';
 import CampaignBriefTab from './CampaignBriefTab';
 import RecruitCreatorsTab from './RecruitCreatorsTab';
 import LoadingSpinner from '../../components/LoadingSpinner';
-
+import { User } from '../../types/User';
 export default function CampaignDetailsPage() {
   const { id } = useParams();
   const [campaign, setCampaign] = useState(null);
@@ -20,6 +20,8 @@ export default function CampaignDetailsPage() {
   const [twitterPost, setTwitterPost] = useState('');
   const [emailContent, setEmailContent] = useState('');
   const [error, setError] = useState('');
+  const [applicants, setApplicants] = useState([]);
+  const [approvedIds, setApprovedIds] = useState([]);
 
   useEffect(() => {
     async function fetchCampaign() {
@@ -87,6 +89,19 @@ export default function CampaignDetailsPage() {
       setNotification('Brief copied!');
       setTimeout(() => setNotification(''), 1500);
     }
+  };
+
+  const handleApprove = async (userId) => {
+    // Call your backend to approve the creator for this campaign
+    await approveCreatorForCampaign(id, userId);
+    setApprovedIds(prev => [...prev, userId]);
+  };
+
+  // Optionally, handle rejection
+  const handleReject = async (userId) => {
+    // Call your backend to reject the creator
+    await rejectCreatorForCampaign(id, userId);
+    setApplicants(prev => prev.filter(app => app._id !== userId));
   };
 
   if (loading) {

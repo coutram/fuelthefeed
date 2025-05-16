@@ -3,6 +3,7 @@ export default function CampaignSubNav({ activeTab, setActiveTab }: { activeTab:
     { key: 'details', label: 'Campaign Details' },
     { key: 'brief', label: 'Campaign Brief' },
     { key: 'recruit', label: 'Recruit Creators' },
+    { key: 'approvals', label: 'Creator Approvals' },
   ];
   return (
     <nav className="flex space-x-2 bg-[#f5f7fb] rounded-xl p-2 shadow-sm w-fit mx-auto mb-8">

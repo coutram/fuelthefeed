@@ -47,7 +47,10 @@ function TopBar() {
         {account ? (
           <>
             <span className="font-mono text-[#0c2937] bg-pink-100 px-4 py-2 rounded-lg text-sm">
-              {account.address.toString().slice(0, 8)}...{account.address.toString().slice(-4)}
+              Email: {user && user.email}
+            </span>
+            <span className="font-mono text-[#0c2937] bg-pink-100 px-4 py-2 rounded-lg text-sm">
+              Wallet ID: {account.address.toString().slice(0, 8)}...{account.address.toString().slice(-4)}
             </span>
             <button
               onClick={handleLogout}
