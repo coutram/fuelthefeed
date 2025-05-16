@@ -4,16 +4,38 @@ import { useState, useEffect } from 'react';
 import { createUser } from '../api'; // Import the createUser function
 import { useRouter } from 'next/navigation'; // Import useRouter
 import { Suspense } from 'react';
+import { getUserByWalletId } from '../api';
+import { useWalletWithRetry } from '../hooks/useWalletWithRetry';
 
 // Create a client component that uses useSearchParams
 function CreateUserForm() {
   const searchParams = useSearchParams()
   const router = useRouter(); // Initialize router here
+  const [user, setUser] = useState(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   // const [walletId, setWalletId] = useState(null); // State to hold walletId
   const walletId = searchParams.get('walletId')
+
+  const { connected, account} = useWalletWithRetry();
+
+  useEffect(() => {
+    async function fetchUser() {
+      if (connected && account?.address) {
+
+        try {
+          const userData = await getUserByWalletId(account.address);
+          setUser(userData.data)
+
+        } catch (e) {
+          console.error('Error fetching user:', e);
+          setUser(null);
+        } 
+      }
+    }
+    fetchUser();
+  }, [router, connected, account]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,18 +59,13 @@ function CreateUserForm() {
     }
   };
 
-  useEffect(() => {
-    if (user) {
-      if (user.role === 'creator') {
-        router.push('/creator-onboarding');
-      } else if (user.role === 'brand') {
-        router.push('/dashboard');
-      } else {
-        // Optionally handle unknown roles
-        alert('Unknown user role!');
-      }
-    }
-  }, [user, router]);
+  if ( user !== null) {
+    if (user.role === 'creator') {
+      router.push('/creator-dashboard');
+    } else if (user.role === 'user') {
+      router.push('/dashboard');
+    } 
+  }
 
   return (
     <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md flex flex-col items-center">

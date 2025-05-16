@@ -6,36 +6,57 @@ import { useRouter } from 'next/navigation';
 import { getUserByWalletId } from '../api';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useWalletWithRetry } from '../hooks/useWalletWithRetry';
+
+
 
 function WalletConnectContent() {
-  const { connect, disconnect, account, connected, wallets } = useWallet();
+
   const router = useRouter();
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const { connect, disconnect, wallets } = useWallet();
+  const { retryConnect, isConnecting, connected, account} = useWalletWithRetry();
 
   useEffect(() => {
-    const checkUser = async () => {
-      if (connected && account) {
+    async function fetchUser() {
+      if (connected && account?.address) {
         setLoading(true);
         try {
-          const data = await getUserByWalletId(account.address);
-
-          const user = data.data;
-
-          if (!user || Object.keys(user).length === 0) { 
-            router.push(`/create-user?walletId=${account.address}`);
+          const userData = await getUserByWalletId(account.address);
+        
+          if (!userData || !userData.data) {
+            router.push('/create-user?walletId=' + account.address);
           } else {
-            console.log('User already exists:', user);
-            router.push('/dashboard');
+            setUser(userData.data);
+            if (userData.data.role === 'creator') {
+              router.push('/creator-dashboard');
+            } else if (userData.data.role === 'user') {
+              router.push('/dashboard');
+            }
           }
-        } catch (error) {
-          console.error('Error fetching user:', error);
+
+       
+        } catch (e) {
+          setUser(null);
+          console.error('Error fetching user:', e, user);
         } finally {
           setLoading(false);
         }
       }
-    };
-    checkUser();
-  }, [connected, account, router]);
+    }
+    fetchUser();
+  }, [connected, account]);
+  
+
+  useEffect(() => {
+    // Attempt to connect wallet on page load if not already connected
+    if (!connected && !isConnecting) {
+      retryConnect();
+    }
+    // Only run on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#0c2937] via-[#1e3a4c] to-[#0c2937] px-4">
@@ -65,7 +86,7 @@ function WalletConnectContent() {
       ) : (
         <div className="flex flex-col items-center">
           <div className="text-gray-800 mt-4">
-            Connected as: <span className="font-mono">{account?.address.toString()}</span>
+            Connected as: <span className="font-mono">{account?.toString()}</span>
           </div>
           <button
             onClick={disconnect}

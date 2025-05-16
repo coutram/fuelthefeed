@@ -5,9 +5,12 @@ import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
 import Modal from '../components/Modal';
 import CreateCampaignForm from '../components/CreateCampaignForm';
-import { getAllCampaigns } from '../api';
+import { getAllCampaigns, getUserByWalletId } from '../api';
 import { useRouter } from 'next/navigation';
 import { Campaign } from '../types/Campaign';
+import LoadingSpinner from '../components/LoadingSpinner';
+import { User } from '../types/User';
+import Notification from '../components/Notifications';
 
 function getCampaignStatus(flightStart: string, flightEnd: string) {
   const now = new Date();
@@ -24,10 +27,35 @@ export default function DashboardPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [loadingUser, setLoadingUser] = useState(true);
   const router = useRouter();
+  const [notification, setNotification] = useState<string | null>(null);
+  const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('info');
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
+
+  useEffect(() => {
+    async function fetchUser() {
+      if (connected && account?.address) {
+        setLoadingUser(true);
+        try {
+          const userData = await getUserByWalletId(account.address);
+          setUser(userData.data);
+        } catch (e) {
+          console.error('Error fetching user:', e);
+          setUser(null);
+        } finally {
+          setLoadingUser(false);
+        }
+      } else {
+        setUser(null);
+        setLoadingUser(false);
+      }
+    }
+    fetchUser();
+  }, [connected, account]);
 
   useEffect(() => {
     async function fetchCampaigns() {
@@ -45,23 +73,13 @@ export default function DashboardPage() {
     fetchCampaigns();
   }, []);
 
-  useEffect(() => {
-    if (account && account.role !== 'brand') {
-      router.replace('/creator-dashboard');
-    }
-  }, [account, router]);
 
-  if (!connected || !account) {
+  if (loadingUser) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0c2937] via-[#1e3a4c] to-[#0c2937] px-4">
-        <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Please Connect Your Wallet</h1>
-          <p className="text-gray-600 mb-6">You need to connect your wallet to access the dashboard.</p>
-          <Link href="/login" className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg transition">
-            Connect Wallet
-          </Link>
-        </div>
-      </main>
+      <div className="flex flex-col items-center justify-center py-12">
+        <LoadingSpinner size={40} />
+        <span className="mt-4 text-gray-500">Loading user...</span>
+      </div>
     );
   }
 
@@ -181,6 +199,14 @@ export default function DashboardPage() {
         >
           <CreateCampaignForm onClose={handleCloseModal} />
         </Modal>
+
+        {notification && (
+          <Notification
+            message={notification}
+            type={notificationType}
+            onClose={() => setNotification(null)}
+          />
+        )}
       </div>
     </main>
   );

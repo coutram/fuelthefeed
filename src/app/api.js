@@ -64,6 +64,10 @@ export const getCampaignById = async (id) => {
   return await apiFetch(`${CAMPAIGN_API_URL}/${id}`);
 };
 
+export const getInvitedCampaigns = async (walletId) => {
+  return await apiFetch(`${CAMPAIGN_API_URL}/invited/${walletId}`);
+};
+
 export const generateCampaignBrief = async (campaignId) => {
   return await apiFetch(`${CAMPAIGN_API_URL}/${campaignId}/generate-brief`, {
     method: 'POST',
@@ -83,6 +87,15 @@ export const approveCampaignBrief = async (campaignId) => {
     body: JSON.stringify({})
   });
 };
+
+export async function applyToCampaign(campaignId, userId) {
+  const res = await apiFetch(`${CAMPAIGN_API_URL}/${campaignId}/apply`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId }),
+  });
+  return res.json();
+}
 
 
 

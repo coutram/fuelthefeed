@@ -1,4 +1,5 @@
 export type Campaign = {
+  _id: string;
   name: string;
   flightStart: string;
   flightEnd: string;
@@ -10,5 +11,6 @@ export type Campaign = {
   kolType: string;
   twitterPost: string;
   emailContent: string;
+  createdAt: string;
   // Add other fields as needed
 };

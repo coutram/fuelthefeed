@@ -1,13 +1,15 @@
 // hooks/useWalletWithRetry.ts
 import { useState } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react'; // Adjust the import based on your library
+import { setAccount } from '../utils/accountManager';
 
 const MAX_RETRIES = 5; // Maximum number of retry attempts
 const RETRY_DELAY = 2000; // Delay between retries in milliseconds
 
 export const useWalletWithRetry = () => {
-  const { connect, connected, account } = useWallet();
+  const { connect, connected, account, disconnect} = useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
+
 
   const retryConnect = async () => {
     setIsConnecting(true);
@@ -15,6 +17,7 @@ export const useWalletWithRetry = () => {
       try {
         await connect();
         if (connected) {
+          setAccount(account.address);
           return account; // Return the connected account if successful
         }
       } catch (error) {
@@ -26,5 +29,5 @@ export const useWalletWithRetry = () => {
     return null; // Return null if all attempts fail
   };
 
-  return { retryConnect, isConnecting, connected, account };
+  return { retryConnect, isConnecting, connected, account, disconnect };
 };

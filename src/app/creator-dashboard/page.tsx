@@ -3,21 +3,25 @@ import React, { useEffect, useState } from 'react';
 import { Campaign } from '@/app/types/Campaign';
 import { User } from '../types/User';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { getAllCampaigns, getUserByWalletId } from '../api';
+import { getAllCampaigns, getUserByWalletId, applyToCampaign } from '../api';
 import { useRouter } from 'next/navigation';
 import CreatorSubNav from './CreatorSubNav';
 import CreatorProfile from './CreatorProfile';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
+import Notification from '../components/Notifications';
+import CreatorInvitations from './CreatorInvitations';
+import CreatorExplore from './CreatorExplore';
 
 export default function CreatorDashboard() {
   const { account, connected } = useWallet();
   const [user, setUser] = useState<User | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
-  const [invitedCampaigns, setInvitedCampaigns] = useState<Campaign[]>([]);
   const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('invitations');
-  const router = useRouter();
+  const [activeTab, setActiveTab] = useState('profile');
+  const [notification, setNotification] = useState<string | null>(null);
+  const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('info');
+  const [applyStatus, setApplyStatus] = useState<{ [campaignId: string]: 'idle' | 'loading' | 'success' | 'error' | 'applied' }>({});
 
   useEffect(() => {
     async function fetchUser() {
@@ -53,15 +57,37 @@ export default function CreatorDashboard() {
     fetchData();
   }, []);
 
-  useEffect(() => {
-    if (user && user.role !== 'creator') {
-      router.replace('/dashboard');
-    }
-  }, [user, router]);
 
   const handleApply = async (campaignId: string) => {
-    // TODO: Implement apply logic
-    alert(`Applied to campaign ${campaignId}`);
+    if (!user?._id) {
+      setNotification('User not found.');
+      return;
+    }
+    setApplyStatus((prev) => ({ ...prev, [campaignId]: 'loading' }));
+    try {
+      const result = await applyToCampaign(campaignId, user._id);
+      if (result.success) {
+        setApplyStatus((prev) => ({ ...prev, [campaignId]: 'success' }));
+        setNotification('Applied successfully!');
+        setNotificationType('success');
+        // Optionally, mark as 'applied' after a delay
+        setTimeout(() => {
+          setApplyStatus((prev) => ({ ...prev, [campaignId]: 'applied' }));
+          setNotification(null);
+        }, 1500);
+      } else {
+        setApplyStatus((prev) => ({ ...prev, [campaignId]: 'error' }));
+        setNotification(result.error || 'Failed to apply.');
+        setNotificationType('error');
+        setTimeout(() => setNotification(null), 2000);
+      }
+    } catch (e) {
+      console.error('Error applying to campaign:', e);
+      setApplyStatus((prev) => ({ ...prev, [campaignId]: 'error' }));
+      setNotification('An error occurred while applying.');
+      setNotificationType('error');
+      setTimeout(() => setNotification(null), 2000);
+    }
   };
 
   if (loadingUser) {
@@ -87,80 +113,26 @@ export default function CreatorDashboard() {
         <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">Creator Dashboard</h1>
         <CreatorSubNav activeTab={activeTab} setActiveTab={setActiveTab} />
 
+        <div className="relative">
+          {notification && (
+            <Notification
+              message={notification}
+              type={notificationType}
+              onClose={() => setNotification(null)}
+            />
+          )}
+        </div>
+
         {activeTab === 'profile' && (
           <CreatorProfile user={user} />
         )}
 
         {activeTab === 'invitations' && (
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">Invitations to Campaigns</h2>
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                <LoadingSpinner size={40} />
-                <span className="mt-4 text-gray-500">Loading invitations...</span>
-              </div>
-            ) : invitedCampaigns.length === 0 ? (
-              <div className="text-gray-500">No invitations yet.</div>
-            ) : (
-              <div className="grid gap-6 md:grid-cols-2">
-                {invitedCampaigns.map((campaign) => (
-                  <div key={campaign._id} className="bg-white rounded-xl shadow-lg p-6">
-                    <h3 className="text-xl font-bold mb-2">{campaign.name}</h3>
-                    <p className="text-gray-600 mb-2">{campaign.description}</p>
-                    <div className="text-sm text-gray-500 mb-2">
-                      <span>Budget: ${campaign.budget}</span> <br />
-                      <span>
-                        Flight: {new Date(campaign.flightStart).toLocaleDateString()} -{' '}
-                        {new Date(campaign.flightEnd).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <button
-                      className="mt-2 px-4 py-2 bg-pink-500 text-white rounded hover:bg-pink-600"
-                      onClick={() => handleApply(campaign._id)}
-                    >
-                      Accept Invitation
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+          <CreatorInvitations user={user} handleApply={handleApply} />
         )}
 
         {activeTab === 'explore' && (
-          <section>
-            <h2 className="text-2xl font-semibold mb-4">Explore to Earn</h2>
-            {loading ? (
-              <div className="flex flex-col items-center justify-center py-8">
-                <LoadingSpinner size={40} />
-                <span className="mt-4 text-gray-500">Loading campaigns...</span>
-              </div>
-            ) : allCampaigns.length === 0 ? (
-              <div className="text-gray-500">No campaigns available right now.</div>
-            ) : (
-              <div className="grid gap-6 md:grid-cols-2">
-                {allCampaigns.map((campaign) => (
-                  <div key={campaign._id} className="bg-white rounded-xl shadow-lg p-6">
-                    <h3 className="text-xl font-bold mb-2">{campaign.name}</h3>
-                    <p className="text-gray-600 mb-2">{campaign.description}</p>
-                    <div className="text-sm text-gray-500 mb-2">
-                      <span>Budget: ${campaign.budget}</span> <br />
-                      <span>
-                        Flight: {new Date(campaign.flightStart).toLocaleDateString()} -{' '}
-                        {new Date(campaign.flightEnd).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <button
-                      className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                      onClick={() => handleApply(campaign._id)}
-                    >
-                      Apply
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
+          <CreatorExplore handleApply={handleApply} />
         )}
 
       </div>

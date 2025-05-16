@@ -1,4 +1,4 @@
-export default function CampaignSubNav({ activeTab, setActiveTab }) {
+export default function CampaignSubNav({ activeTab, setActiveTab }: { activeTab: string, setActiveTab: (tab: string) => void }) {
   const tabs = [
     { key: 'details', label: 'Campaign Details' },
     { key: 'brief', label: 'Campaign Brief' },

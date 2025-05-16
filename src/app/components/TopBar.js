@@ -1,11 +1,40 @@
 "use client";
 
 import Image from "next/image";
-import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { getUserByWalletId } from "@/app/api";
+import { useWalletWithRetry } from "@/app/hooks/useWalletWithRetry";
 
 function TopBar() {
-  const { account, connected, disconnect } = useWallet();
+
+  const router = useRouter();
+  const { connected, account, disconnect} = useWalletWithRetry();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    async function fetchUser() {
+      if (connected && account?.address) {
+
+        try {
+          const userData = await getUserByWalletId(account.address);
+          setUser(userData.data)
+
+        } catch (e) {
+          console.error('Error fetching user:', e);
+          setUser(null);
+        } 
+      }
+    }
+    fetchUser();
+  }, [router, connected, account]);
+
+
+  const handleLogout = () => {
+    disconnect();
+    router.push("/");
+  };
   
   return (
     <nav className="w-full flex items-center justify-between px-6 py-4 bg-[#fdf9ef] fixed top-0 left-0 z-50 border-b border-[#1e3a4c] shadow-md">
@@ -15,13 +44,13 @@ function TopBar() {
         </Link>
       </div>
       <div className="flex items-center gap-4">
-        {connected && account ? (
+        {account ? (
           <>
             <span className="font-mono text-[#0c2937] bg-pink-100 px-4 py-2 rounded-lg text-sm">
               {account.address.toString().slice(0, 8)}...{account.address.toString().slice(-4)}
             </span>
             <button
-              onClick={disconnect}
+              onClick={handleLogout}
               className="bg-pink-500 hover:bg-pink-600 text-white font-bold px-4 py-2 rounded-full shadow transition"
             >
               Logout

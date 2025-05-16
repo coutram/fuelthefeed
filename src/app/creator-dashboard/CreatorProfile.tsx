@@ -1,7 +1,11 @@
 import React from 'react';
 import { User } from '../types/User';
 
-export default function CreatorProfile({ user }: { user: User }) {
+type CreatorProfileProps = {
+  user: User;
+};
+
+export default function CreatorProfile({ user }: CreatorProfileProps) {
   // Stub data for now; replace with real data as needed
   const interests = user.interests || ['Art', 'Tech', 'Music'];
   const popularTweets = user.popularTweets || [
