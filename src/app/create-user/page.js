@@ -1,54 +1,101 @@
 "use client";
 import { useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react';
-import { createUser } from '../api'; // Import the createUser function
-import { useRouter } from 'next/navigation'; // Import useRouter
+import { createUser, getUserByWalletId } from '../api';
+import { useRouter } from 'next/navigation';
 import { Suspense } from 'react';
-import { getUserByWalletId } from '../api';
 import { useWalletWithRetry } from '../hooks/useWalletWithRetry';
 
-// Create a client component that uses useSearchParams
 function CreateUserForm() {
   const searchParams = useSearchParams()
-  const router = useRouter(); // Initialize router here
+  const router = useRouter();
   const [user, setUser] = useState(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  // const [walletId, setWalletId] = useState(null); // State to hold walletId
-  const walletId = searchParams.get('walletId')
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const { connected, account} = useWalletWithRetry();
+  const { connected, account, retryConnect } = useWalletWithRetry();
+  const walletId = searchParams.get('walletId');
 
+  // Handle wallet connection
+  useEffect(() => {
+    if (!connected) {
+      console.log('Wallet not connected, attempting to connect...');
+      retryConnect();
+    }
+  }, [connected, retryConnect]);
+
+  // Fetch user data
   useEffect(() => {
     async function fetchUser() {
-      if (connected && account?.address) {
+      setIsLoading(true);
+      setError(null);
 
-        try {
-          const userData = await getUserByWalletId(account.address);
-          setUser(userData.data)
+      try {
+        // Use walletId from URL params if account address is not available
+        const addressToUse = account?.address || walletId;
+        
+        if (!addressToUse) {
+          console.log('No wallet address available');
+          setIsLoading(false);
+          return;
+        }
 
-        } catch (e) {
-          console.error('Error fetching user:', e);
+        console.log('Fetching user for wallet:', addressToUse);
+        const response = await getUserByWalletId(addressToUse);
+        console.log('Received user data:', response);
+
+        if (response?.status === 'success' && response?.data) {
+          console.log('Setting user data:', response.data);
+          setUser(response.data);
+          
+          // Only redirect if we have a valid user with a role
+          if (response.data.role) {
+            if (response.data.role === 'creator') {
+              router.push('/creator-dashboard');
+            } else if (response.data.role === 'brand') {
+              router.push('/dashboard');
+            }
+          }
+        } else {
+          console.log('No user data found for wallet:', addressToUse);
           setUser(null);
-        } 
+        }
+      } catch (e) {
+        console.error('Error fetching user:', e);
+        setError(e.message);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
     }
+
     fetchUser();
-  }, [router, connected, account]);
+  }, [router, account?.address, walletId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const formData = new FormData(e.target);
+      const addressToUse = account?.address || walletId;
+      
+      if (!addressToUse) {
+        throw new Error('No wallet address available');
+      }
+
       const userData = {
         firstName,
         lastName,
         email,
-        walletId,
+        walletId: addressToUse,
         role: formData.get('role'),
       };
-      await createUser(userData); // Use createUser from api.js
+
+      console.log('Creating user with data:', userData);
+      await createUser(userData);
+      
       if (userData.role === 'creator') {
         router.push('/creator-onboarding');
       } else {
@@ -56,15 +103,38 @@ function CreateUserForm() {
       }
     } catch (error) {
       console.error('Failed to create user:', error);
+      setError(error.message);
     }
   };
 
-  if ( user !== null) {
-    if (user.role === 'creator') {
-      router.push('/creator-dashboard');
-    } else if (user.role === 'user') {
-      router.push('/dashboard');
-    } 
+  if (isLoading) {
+    return (
+      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md flex flex-col items-center">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-3/4 mb-6"></div>
+          <div className="space-y-4 w-full">
+            <div className="h-10 bg-gray-200 rounded"></div>
+            <div className="h-10 bg-gray-200 rounded"></div>
+            <div className="h-10 bg-gray-200 rounded"></div>
+            <div className="h-10 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md flex flex-col items-center">
+        <div className="text-red-500 mb-4">{error}</div>
+        <button 
+          onClick={() => retryConnect()} 
+          className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 px-4 rounded"
+        >
+          Retry Connection
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -112,7 +182,7 @@ function CreateUserForm() {
           </select>
           <p className="text-xs text-gray-400 mt-1">Choose whether this user is a brand or a creator.</p>
         </div>
-        <button type="submit" className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg transition">
+        <button type="submit" className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg transition mt-4 w-full">
           Create Account
         </button>
       </form>
@@ -120,28 +190,10 @@ function CreateUserForm() {
   );
 }
 
-// Loading component to show while the form is loading
-function LoadingForm() {
-  return (
-    <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md flex flex-col items-center">
-      <div className="animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-3/4 mb-6"></div>
-        <div className="space-y-4 w-full">
-          <div className="h-10 bg-gray-200 rounded"></div>
-          <div className="h-10 bg-gray-200 rounded"></div>
-          <div className="h-10 bg-gray-200 rounded"></div>
-          <div className="h-10 bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Main page component that wraps the form in Suspense
 export default function CreateUserPage() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#0c2937] via-[#1e3a4c] to-[#0c2937] px-4">
-      <Suspense fallback={<LoadingForm />}>
+      <Suspense fallback={<div>Loading...</div>}>
         <CreateUserForm />
       </Suspense>
     </main>

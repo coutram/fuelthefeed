@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import './CreateCampaignForm.css'; // Import your CSS for styling
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createCampaign, updateCampaign } from '../api';
-import Image from 'next/image';
+import { getCampaignById, updateCampaign, updateCampaignIcon } from '../api';
+import './CreateCampaignForm.css';
 
 const helper = {
     name: "Give your campaign a memorable name.",
@@ -37,12 +36,18 @@ const businessCategories = [
     { value: 'other', label: 'Other' },
 ];
 
-const CreateCampaignForm = ({ onClose }) => {
+const safeToISOString = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? '' : date.toISOString();
+};
+
+const EditCampaignForm = ({ campaignId, onClose }) => {
     const router = useRouter();
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [error, setError] = useState(null);
     const [currentStep, setCurrentStep] = useState(1);
-    const [campaignId, setCampaignId] = useState(null);
     const [formData, setFormData] = useState({
         name: '',
         flightStart: '',
@@ -55,6 +60,42 @@ const CreateCampaignForm = ({ onClose }) => {
         icon: null
     });
     const [previewUrl, setPreviewUrl] = useState(null);
+    const [originalIcon, setOriginalIcon] = useState(null);
+
+    useEffect(() => {
+        async function fetchCampaign() {
+            setLoading(true);
+            try {
+                const res = await getCampaignById(campaignId);
+                const data = await res.json();
+                console.log('Fetched campaign:', data);
+                console.log('flightStart:', data.flightStart, 'flightEnd:', data.flightEnd);
+                const flightStartISO = safeToISOString(data.flightStart);
+                const flightEndISO = safeToISOString(data.flightEnd);
+                setFormData({
+                    name: data.name,
+                    flightStart: flightStartISO,
+                    flightEnd: flightEndISO,
+                    description: data.description,
+                    kolType: data.kolType,
+                    businessCategory: data.businessCategory,
+                    productService: data.productService,
+                    budget: data.budget,
+                    icon: null
+                });
+                if (data.icon) {
+                    setOriginalIcon(data.icon);
+                    setPreviewUrl(data.icon);
+                }
+            } catch (e) {
+                console.error('Error fetching campaign:', e);
+                setError('Failed to load campaign');
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchCampaign();
+    }, [campaignId]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -67,17 +108,31 @@ const CreateCampaignForm = ({ onClose }) => {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            // Check file size (10MB limit)
+            const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+            if (file.size > MAX_FILE_SIZE) {
+                setError('File size exceeds 10MB limit');
+                return;
+            }
+
+            // Check file type
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                setError('Invalid file type. Only JPEG, PNG, and GIF are allowed');
+                return;
+            }
+
             setFormData(prev => ({
                 ...prev,
                 icon: file
             }));
             const url = URL.createObjectURL(file);
             setPreviewUrl(url);
+            setError(null); // Clear any previous errors
         }
     };
 
     const handleStep1Submit = () => {
-        // Just validate and move to next step
         if (!formData.name || !formData.flightStart || !formData.flightEnd || !formData.description) {
             setError('Please fill in all required fields');
             return;
@@ -86,39 +141,41 @@ const CreateCampaignForm = ({ onClose }) => {
     };
 
     const handleStep2Submit = async () => {
-        setLoading(true);
+        setSaving(true);
         setError(null);
         try {
-            // Create campaign with all required fields
             const campaignData = {
                 name: formData.name,
-                flightStart: formData.flightStart,
-                flightEnd: formData.flightEnd,
+                flightStart: new Date(formData.flightStart).toISOString(),
+                flightEnd: new Date(formData.flightEnd).toISOString(),
                 description: formData.description,
                 kolType: formData.kolType,
                 businessCategory: formData.businessCategory,
                 productService: formData.productService,
-                budget: formData.budget
+                budget: Number(formData.budget)
             };
-            const data = await createCampaign(campaignData);
-            setCampaignId(data._id);
+            await updateCampaign(campaignId, campaignData);
             setCurrentStep(3);
         } catch (error) {
-            console.error('Error creating campaign:', error);
-            setError(error.message || 'Failed to create campaign');
+            console.error('Error updating campaign:', error);
+            setError(error.message || 'Failed to update campaign');
         } finally {
-            setLoading(false);
+            setSaving(false);
         }
     };
 
     const handleStep3Submit = async () => {
-        setLoading(true);
+        setSaving(true);
         setError(null);
         try {
             if (formData.icon) {
-                const uploadData = new FormData();
-                uploadData.append('icon', formData.icon);
-                await updateCampaign(campaignId, uploadData);
+                // Check file size again before upload
+                const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
+                if (formData.icon.size > MAX_FILE_SIZE) {
+                    throw new Error('File size exceeds 10MB limit');
+                }
+
+                await updateCampaignIcon(campaignId, formData.icon);
             }
             
             if (onClose && typeof onClose === 'function') {
@@ -129,7 +186,7 @@ const CreateCampaignForm = ({ onClose }) => {
             console.error('Error updating campaign:', error);
             setError(error.message || 'Failed to update campaign');
         } finally {
-            setLoading(false);
+            setSaving(false);
         }
     };
 
@@ -147,10 +204,6 @@ const CreateCampaignForm = ({ onClose }) => {
             default:
                 break;
         }
-    };
-
-    const prevStep = () => {
-        setCurrentStep(prev => prev - 1);
     };
 
     const renderStepIndicator = () => (
@@ -333,17 +386,15 @@ const CreateCampaignForm = ({ onClose }) => {
                     <div className="space-y-1 text-center">
                         {previewUrl ? (
                             <div className="mb-4">
-                                <Image
+                                <img
                                     src={previewUrl}
                                     alt="Preview"
                                     className="mx-auto h-32 w-32 object-cover rounded-lg"
-                                    width={128}
-                                    height={128}
                                 />
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        setPreviewUrl(null);
+                                        setPreviewUrl(originalIcon);
                                         setFormData(prev => ({ ...prev, icon: null }));
                                     }}
                                     className="mt-2 text-sm text-red-600 hover:text-red-500"
@@ -393,6 +444,14 @@ const CreateCampaignForm = ({ onClose }) => {
         </div>
     );
 
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center p-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+            </div>
+        );
+    }
+
     return (
         <form
             onSubmit={(e) => {
@@ -402,8 +461,8 @@ const CreateCampaignForm = ({ onClose }) => {
             className="p-8 space-y-6 w-full"
             style={{ minWidth: 350 }}
         >
-            <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">Create a New Campaign</h2>
-            <p className="text-gray-500 text-center mb-6">Fill out the details below to launch your campaign.</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2 text-center">Edit Campaign</h2>
+            <p className="text-gray-500 text-center mb-6">Update your campaign details below.</p>
 
             {renderStepIndicator()}
 
@@ -421,7 +480,7 @@ const CreateCampaignForm = ({ onClose }) => {
                 {currentStep > 1 && (
                     <button
                         type="button"
-                        onClick={prevStep}
+                        onClick={() => setCurrentStep(prev => prev - 1)}
                         className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
                     >
                         Previous
@@ -429,22 +488,22 @@ const CreateCampaignForm = ({ onClose }) => {
                 )}
                 <button
                     type="submit"
-                    disabled={loading}
+                    disabled={saving}
                     className={`ml-auto px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition flex items-center ${
                         currentStep === 3 ? 'w-full' : ''
                     }`}
                 >
-                    {loading && (
+                    {saving && (
                         <svg className="animate-spin h-5 w-5 mr-2 text-white" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                         </svg>
                     )}
-                    {loading ? 'Saving...' : currentStep === 3 ? 'Complete Campaign' : 'Next'}
+                    {saving ? 'Saving...' : currentStep === 3 ? 'Save Changes' : 'Next'}
                 </button>
             </div>
         </form>
     );
 };
 
-export default CreateCampaignForm;
+export default EditCampaignForm; 

@@ -8,7 +8,7 @@ import CampaignDetailsTab from './CampaignDetailsTab';
 import CampaignBriefTab from './CampaignBriefTab';
 import RecruitCreatorsTab from './RecruitCreatorsTab';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import { User } from '../../types/User';
+
 export default function CampaignDetailsPage() {
   const { id } = useParams();
   const [campaign, setCampaign] = useState(null);
@@ -27,7 +27,8 @@ export default function CampaignDetailsPage() {
     async function fetchCampaign() {
       setLoading(true);
       try {
-        const data = await getCampaignById(id);
+        const res = await getCampaignById(id);
+        const data = await res.json();
         setCampaign(data);
         setIsApproved(data.briefApproved || false);
         if (data.campaignBrief) {
@@ -49,11 +50,12 @@ export default function CampaignDetailsPage() {
     setBriefLoading(true);
     setNotification('Regenerating brief...');
     try {
-      const response = await generateCampaignBrief(id);
-      setCampaign(response);
+      const res = await generateCampaignBrief(id);
+      const data = await res.json();
+      setCampaign(data);
       setIsApproved(false);
-      setTwitterPost(response.twitterPost || '');
-      setEmailContent(response.emailContent || '');
+      setTwitterPost(data.twitterPost || '');
+      setEmailContent(data.emailContent || '');
       setNotification('Brief regenerated!');
     } catch (e) {
       console.error('Error regenerating brief:', e);
@@ -68,11 +70,12 @@ export default function CampaignDetailsPage() {
     setBriefLoading(true);
     setNotification('Approving brief...');
     try {
-      const response = await approveCampaignBrief(id);
+      const res = await approveCampaignBrief(id);
+      const data = await res.json();
       setIsApproved(true);
-      setCampaign(response);
-      setTwitterPost(response.twitterPost || '');
-      setEmailContent(response.emailContent || '');
+      setCampaign(data);
+      setTwitterPost(data.twitterPost || '');
+      setEmailContent(data.emailContent || '');
       setNotification('Brief approved!');
     } catch (e) {
       console.error('Error approving brief:', e);

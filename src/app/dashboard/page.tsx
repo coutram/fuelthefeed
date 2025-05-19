@@ -24,14 +24,14 @@ function getCampaignStatus(flightStart: string, flightEnd: string) {
 
 export default function DashboardPage() {
   const { account, connected } = useWallet();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const [loadingUser, setLoadingUser] = useState(true);
-  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
   const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('info');
+  const [loadingUser, setLoadingUser] = useState(true);
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
@@ -59,20 +59,33 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function fetchCampaigns() {
-      setLoading(true);
+      setIsLoading(true);
       try {
-        const data = await getAllCampaigns();
-        setCampaigns(data);
-      } catch (e) {
-        console.error('Error fetching campaigns:', e);
+        const response = await getAllCampaigns();
+        console.log('Campaigns response:', response);
+        
+        // Parse the response data
+        const responseData = await response.json();
+        console.log('Parsed campaigns data:', responseData);
+        
+        // The response is already an array of campaigns
+        if (!Array.isArray(responseData)) {
+          console.error('Campaigns data is not an array:', responseData);
+          setCampaigns([]);
+          return;
+        }
+        
+        setCampaigns(responseData);
+      } catch (error) {
+        console.error('Error fetching campaigns:', error);
         setCampaigns([]);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     }
+
     fetchCampaigns();
   }, []);
-
 
   if (loadingUser) {
     return (
@@ -113,8 +126,27 @@ export default function DashboardPage() {
           </button>
         </div>
 
-        {loading ? (
-          <div className="text-center text-white">Loading campaigns...</div>
+        {isLoading ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white rounded-lg shadow-lg p-6 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+              </div>
+            ))}
+          </div>
+        ) : campaigns.length === 0 ? (
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-semibold text-white mb-4">No Campaigns Yet</h2>
+            <p className="text-gray-300 mb-8">Create your first campaign to get started!</p>
+            <button
+              onClick={handleOpenModal}
+              className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg transition inline-block"
+            >
+              Create Your First Campaign
+            </button>
+          </div>
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {campaigns.map((campaign) => (
@@ -158,37 +190,6 @@ export default function DashboardPage() {
                 </div>
               </div>
             ))}
-          </div>
-        )}
-
-        {campaigns.length === 0 && !loading && (
-          <div className="text-center py-12">
-            <div className="bg-white rounded-xl shadow-lg p-8 max-w-md mx-auto">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">No Campaigns Yet</h3>
-              <p className="text-gray-600 mb-6">
-                Create your first campaign to start working with influencers
-              </p>
-              <button
-                onClick={handleOpenModal}
-                className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg transition inline-flex items-center"
-              >
-                <svg
-                  className="w-5 h-5 mr-2"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 4v16m8-8H4"
-                  />
-                </svg>
-                Create Your First Campaign
-              </button>
-            </div>
           </div>
         )}
 
