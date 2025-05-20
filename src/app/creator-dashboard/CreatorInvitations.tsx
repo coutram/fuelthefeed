@@ -13,7 +13,7 @@ function CreatorInvitations({ user, handleApply }: CreatorInvitationsProps) {
 
   const [loading, setLoading] = useState(true);
   const [invitedCampaigns, setInvitedCampaigns] = useState<Campaign[]>([]);
-  const [applyStatus, setApplyStatus] = useState<{ [campaignId: string]: 'idle' | 'loading' | 'success' | 'error' | 'applied' }>({});
+  const [applyStatus] = useState<{ [campaignId: string]: 'idle' | 'loading' | 'success' | 'error' | 'applied' }>({});
 
   useEffect(() => {
     async function fetchInvitedCampaigns() {

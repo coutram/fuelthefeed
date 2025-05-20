@@ -1,7 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Campaign } from '@/app/types/Campaign';
-// import { getCampaignById } from '../../api';
-import { useParams } from 'next/navigation';
 
 type Props = {
   campaign: Campaign;
@@ -13,6 +11,8 @@ type Props = {
   onCopy: () => void;
   loading: boolean;
   error?: string;
+  twitterPost: string;
+  emailContent: string;
 };
 
 export default function CampaignBriefTab({
@@ -26,9 +26,6 @@ export default function CampaignBriefTab({
   loading,
   error,
 }: Props) {
-  // const [campaignState, setCampaignState] = useState<Campaign | null>(null);
-  // const [loadingState, setLoadingState] = useState(true);
-  const { id } = useParams();
   
   return (
     <div className="bg-white rounded-lg shadow p-6">
@@ -104,7 +101,7 @@ export default function CampaignBriefTab({
 }
 
 // Helper function
-function formatBriefForEmail(campaign) {
+function formatBriefForEmail(campaign: Campaign) {
   return campaign.campaignBrief
     ? `Campaign: ${campaign.name}\n\n${campaign.campaignBrief}\n\nFor more info, contact us.`
     : '';

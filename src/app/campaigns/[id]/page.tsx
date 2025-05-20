@@ -8,10 +8,11 @@ import CampaignDetailsTab from './CampaignDetailsTab';
 import CampaignBriefTab from './CampaignBriefTab';
 import RecruitCreatorsTab from './RecruitCreatorsTab';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import { Campaign } from '@/app/types/Campaign';
 
 export default function CampaignDetailsPage() {
   const { id } = useParams();
-  const [campaign, setCampaign] = useState(null);
+  const [campaign, setCampaign] = useState<Campaign | null>(null);
   const [activeTab, setActiveTab] = useState('details');
   const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState('');
@@ -20,8 +21,8 @@ export default function CampaignDetailsPage() {
   const [twitterPost, setTwitterPost] = useState('');
   const [emailContent, setEmailContent] = useState('');
   const [error, setError] = useState('');
-  const [applicants, setApplicants] = useState([]);
-  const [approvedIds, setApprovedIds] = useState([]);
+  // const [applicants, setApplicants] = useState([]);
+  // const [approvedIds, setApprovedIds] = useState([]);
 
   useEffect(() => {
     async function fetchCampaign() {
@@ -94,18 +95,18 @@ export default function CampaignDetailsPage() {
     }
   };
 
-  const handleApprove = async (userId) => {
-    // Call your backend to approve the creator for this campaign
-    await approveCreatorForCampaign(id, userId);
-    setApprovedIds(prev => [...prev, userId]);
-  };
+  // const handleApprove = async (userId: string) => {
+  //   // Call your backend to approve the creator for this campaign
+  //   await approveCreatorForCampaign(id, userId);
+  //   setApprovedIds(prev => [...prev, userId]);
+  // };
 
   // Optionally, handle rejection
-  const handleReject = async (userId) => {
-    // Call your backend to reject the creator
-    await rejectCreatorForCampaign(id, userId);
-    setApplicants(prev => prev.filter(app => app._id !== userId));
-  };
+  // const handleReject = async (userId) => {
+  //   // Call your backend to reject the creator
+  //   await rejectCreatorForCampaign(id, userId);
+  //   setApplicants(prev => prev.filter(app => app._id !== userId));
+  // };
 
   if (loading) {
     return (
@@ -150,13 +151,13 @@ export default function CampaignDetailsPage() {
   );
 }
 
-function generateTwitterPost(campaign) {
+function generateTwitterPost(campaign: Campaign) {
   return campaign.campaignBrief
     ? `🎯 Looking for creators for our ${campaign.name} campaign!\n\n${campaign.campaignBrief}\n\nDM to apply! #CreatorEconomy #InfluencerMarketing`
     : '';
 }
 
-function formatBriefForEmail(campaign) {
+function formatBriefForEmail(campaign: Campaign) {
   return campaign.campaignBrief
     ? `Campaign: ${campaign.name}\n\n${campaign.campaignBrief}\n\nFor more info, contact us.`
     : '';

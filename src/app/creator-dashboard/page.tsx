@@ -4,7 +4,6 @@ import { Campaign } from '@/app/types/Campaign';
 import { User } from '../types/User';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { getAllCampaigns, getUserByWalletId, applyToCampaign } from '../api';
-import { useRouter } from 'next/navigation';
 import CreatorSubNav from './CreatorSubNav';
 import CreatorProfile from './CreatorProfile';
 import { useWallet } from '@aptos-labs/wallet-adapter-react';
