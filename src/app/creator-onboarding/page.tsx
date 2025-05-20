@@ -1,6 +1,9 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+// import { useWallet } from '@aptos-labs/wallet-adapter-react';
+import { useWalletWithRetry } from '../hooks/useWalletWithRetry';
+import { getUserByWalletId, updateUser } from '../api';
 
 const INTERESTS = [
   'Animals', 'Art', 'Books', 'Comedy', 'Comics', 'Culture', 'Software Dev',
@@ -11,7 +14,11 @@ const INTERESTS = [
 
 export default function CreatorOnboarding() {
   const [selected, setSelected] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const router = useRouter();
+  const { account } = useWalletWithRetry();
+
   const toggleInterest = (interest: string) => {
     setSelected((prev) =>
       prev.includes(interest)
@@ -20,10 +27,35 @@ export default function CreatorOnboarding() {
     );
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Send selected interests to your backend
-    router.push('/creator-socials');
+    if (!account?.address) {
+      setError('Wallet not connected');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      // Get the user first
+      const userResponse = await getUserByWalletId(account.address);
+      if (!userResponse?.data?._id) {
+        throw new Error('User not found');
+      }
+
+      // Update the user with selected interests
+      await updateUser(userResponse.data._id, {
+        interests: selected
+      });
+
+      router.push('/creator-socials');
+    } catch (err) {
+      console.error('Error saving interests:', err);
+      setError(err.message || 'Failed to save interests');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -55,12 +87,17 @@ export default function CreatorOnboarding() {
               </button>
             ))}
           </div>
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded mb-4">
+              {error}
+            </div>
+          )}
           <button
             type="submit"
-            disabled={selected.length === 0}
-            className="w-full py-3 bg-pink-500 text-white rounded-lg font-semibold text-lg hover:bg-pink-600 transition"
+            disabled={selected.length === 0 || isSubmitting}
+            className="w-full py-3 bg-pink-500 text-white rounded-lg font-semibold text-lg hover:bg-pink-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Continue
+            {isSubmitting ? 'Saving...' : 'Continue'}
           </button>
         </form>
       </div>

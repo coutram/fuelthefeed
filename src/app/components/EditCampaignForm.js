@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCampaignById, updateCampaign, updateCampaignIcon } from '../api';
+import { getCampaignById, updateCampaign } from '../api';
 import './CreateCampaignForm.css';
 
 const helper = {
@@ -36,10 +36,11 @@ const businessCategories = [
     { value: 'other', label: 'Other' },
 ];
 
-const safeToISOString = (dateStr) => {
+const formatDateForInput = (dateStr) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
-    return isNaN(date.getTime()) ? '' : date.toISOString();
+    if (isNaN(date.getTime())) return '';
+    return date.toISOString().split('T')[0];
 };
 
 const EditCampaignForm = ({ campaignId, onClose }) => {
@@ -56,11 +57,8 @@ const EditCampaignForm = ({ campaignId, onClose }) => {
         kolType: '',
         businessCategory: '',
         productService: '',
-        budget: '',
-        icon: null
+        budget: ''
     });
-    const [previewUrl, setPreviewUrl] = useState(null);
-    const [originalIcon, setOriginalIcon] = useState(null);
 
     useEffect(() => {
         async function fetchCampaign() {
@@ -70,23 +68,16 @@ const EditCampaignForm = ({ campaignId, onClose }) => {
                 const data = await res.json();
                 console.log('Fetched campaign:', data);
                 console.log('flightStart:', data.flightStart, 'flightEnd:', data.flightEnd);
-                const flightStartISO = safeToISOString(data.flightStart);
-                const flightEndISO = safeToISOString(data.flightEnd);
                 setFormData({
                     name: data.name,
-                    flightStart: flightStartISO,
-                    flightEnd: flightEndISO,
+                    flightStart: formatDateForInput(data.flightStart),
+                    flightEnd: formatDateForInput(data.flightEnd),
                     description: data.description,
                     kolType: data.kolType,
                     businessCategory: data.businessCategory,
                     productService: data.productService,
-                    budget: data.budget,
-                    icon: null
+                    budget: data.budget
                 });
-                if (data.icon) {
-                    setOriginalIcon(data.icon);
-                    setPreviewUrl(data.icon);
-                }
             } catch (e) {
                 console.error('Error fetching campaign:', e);
                 setError('Failed to load campaign');
@@ -103,33 +94,6 @@ const EditCampaignForm = ({ campaignId, onClose }) => {
             ...prev,
             [name]: value
         }));
-    };
-
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            // Check file size (10MB limit)
-            const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
-            if (file.size > MAX_FILE_SIZE) {
-                setError('File size exceeds 10MB limit');
-                return;
-            }
-
-            // Check file type
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-            if (!allowedTypes.includes(file.type)) {
-                setError('Invalid file type. Only JPEG, PNG, and GIF are allowed');
-                return;
-            }
-
-            setFormData(prev => ({
-                ...prev,
-                icon: file
-            }));
-            const url = URL.createObjectURL(file);
-            setPreviewUrl(url);
-            setError(null); // Clear any previous errors
-        }
     };
 
     const handleStep1Submit = () => {
@@ -155,28 +119,6 @@ const EditCampaignForm = ({ campaignId, onClose }) => {
                 budget: Number(formData.budget)
             };
             await updateCampaign(campaignId, campaignData);
-            setCurrentStep(3);
-        } catch (error) {
-            console.error('Error updating campaign:', error);
-            setError(error.message || 'Failed to update campaign');
-        } finally {
-            setSaving(false);
-        }
-    };
-
-    const handleStep3Submit = async () => {
-        setSaving(true);
-        setError(null);
-        try {
-            if (formData.icon) {
-                // Check file size again before upload
-                const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB in bytes
-                if (formData.icon.size > MAX_FILE_SIZE) {
-                    throw new Error('File size exceeds 10MB limit');
-                }
-
-                await updateCampaignIcon(campaignId, formData.icon);
-            }
             
             if (onClose && typeof onClose === 'function') {
                 onClose();
@@ -198,9 +140,6 @@ const EditCampaignForm = ({ campaignId, onClose }) => {
             case 2:
                 await handleStep2Submit();
                 break;
-            case 3:
-                await handleStep3Submit();
-                break;
             default:
                 break;
         }
@@ -208,14 +147,14 @@ const EditCampaignForm = ({ campaignId, onClose }) => {
 
     const renderStepIndicator = () => (
         <div className="flex justify-center mb-8">
-            {[1, 2, 3].map((step) => (
+            {[1, 2].map((step) => (
                 <div key={step} className="flex items-center">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                         currentStep === step ? 'bg-pink-500 text-white' : 'bg-gray-200 text-gray-600'
                     }`}>
                         {step}
                     </div>
-                    {step < 3 && (
+                    {step < 2 && (
                         <div className={`w-16 h-1 ${
                             currentStep > step ? 'bg-pink-500' : 'bg-gray-200'
                         }`} />
@@ -376,74 +315,6 @@ const EditCampaignForm = ({ campaignId, onClose }) => {
         </div>
     );
 
-    const renderStep3 = () => (
-        <div className="space-y-6">
-            <div>
-                <label htmlFor="icon" className="block text-sm font-semibold text-gray-700 mb-1">
-                    Campaign Icon
-                </label>
-                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
-                    <div className="space-y-1 text-center">
-                        {previewUrl ? (
-                            <div className="mb-4">
-                                <img
-                                    src={previewUrl}
-                                    alt="Preview"
-                                    className="mx-auto h-32 w-32 object-cover rounded-lg"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setPreviewUrl(originalIcon);
-                                        setFormData(prev => ({ ...prev, icon: null }));
-                                    }}
-                                    className="mt-2 text-sm text-red-600 hover:text-red-500"
-                                >
-                                    Remove
-                                </button>
-                            </div>
-                        ) : (
-                            <svg
-                                className="mx-auto h-12 w-12 text-gray-400"
-                                stroke="currentColor"
-                                fill="none"
-                                viewBox="0 0 48 48"
-                                aria-hidden="true"
-                            >
-                                <path
-                                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                                    strokeWidth={2}
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                />
-                            </svg>
-                        )}
-                        <div className="flex text-sm text-gray-600">
-                            <label
-                                htmlFor="icon"
-                                className="relative cursor-pointer bg-white rounded-md font-medium text-pink-600 hover:text-pink-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-pink-500"
-                            >
-                                <span>Upload a file</span>
-                                <input
-                                    id="icon"
-                                    name="icon"
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleFileChange}
-                                    className="sr-only"
-                                />
-                            </label>
-                            <p className="pl-1">or drag and drop</p>
-                        </div>
-                        <p className="text-xs text-gray-500">
-                            PNG, JPG, GIF up to 10MB
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-
     if (loading) {
         return (
             <div className="flex justify-center items-center p-8">
@@ -474,7 +345,6 @@ const EditCampaignForm = ({ campaignId, onClose }) => {
 
             {currentStep === 1 && renderStep1()}
             {currentStep === 2 && renderStep2()}
-            {currentStep === 3 && renderStep3()}
 
             <div className="flex justify-between pt-4">
                 {currentStep > 1 && (
@@ -490,7 +360,7 @@ const EditCampaignForm = ({ campaignId, onClose }) => {
                     type="submit"
                     disabled={saving}
                     className={`ml-auto px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition flex items-center ${
-                        currentStep === 3 ? 'w-full' : ''
+                        currentStep === 2 ? 'w-full' : ''
                     }`}
                 >
                     {saving && (
@@ -499,7 +369,7 @@ const EditCampaignForm = ({ campaignId, onClose }) => {
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                         </svg>
                     )}
-                    {saving ? 'Saving...' : currentStep === 3 ? 'Save Changes' : 'Next'}
+                    {saving ? 'Saving...' : currentStep === 2 ? 'Save Changes' : 'Next'}
                 </button>
             </div>
         </form>

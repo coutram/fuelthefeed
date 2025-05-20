@@ -44,9 +44,9 @@ export const apiFetch = async (endpoint, options = {}) => {
     headers: options.body instanceof FormData 
       ? {} // Don't set Content-Type for FormData
       : {
-          'Content-Type': 'application/json',
-          ...(options.headers || {}),
-        },
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
   });
 
   if (!response.ok) {
@@ -62,26 +62,44 @@ export const apiFetch = async (endpoint, options = {}) => {
 const USER_API_URL = `/api/users`; // Adjust the URL as necessary
 
 export const createUser = async (userData) => {
-  return await apiFetch(USER_API_URL, {
-    method: 'POST',
+  try {
+    console.log('Creating user with data:', JSON.stringify(userData, null, 2));
+    const response = await apiFetch(USER_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(userData),
+    });
+    
+    const data = await response.json();
+    console.log('User creation response:', data);
+    
+    if (data.status === 'error') {
+      throw new Error(data.message || 'Failed to create user');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error creating user:', error);
+    throw error;
+  }
+};
+
+export const updateUser = async (userId, updateData) => {
+  return await apiFetch(`${USER_API_URL}/${userId}`, {
+    method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(userData),
+    body: JSON.stringify(updateData),
   });
 };
 
 export const getUserByWalletId = async (walletId) => {
   try {
-    // Convert Uint8Array to hex string if needed
-    const walletAddress = walletId?.data ? 
-      '0x' + Array.from(walletId.data)
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('') : 
-      walletId;
-
-    console.log('API: Fetching user for wallet:', walletAddress);
-    const response = await apiFetch(`${USER_API_URL}/wallet/${walletAddress}`);
+    console.log('API: Fetching user for wallet:', walletId);
+    const response = await apiFetch(`${USER_API_URL}/wallet/${walletId}`);
     console.log('API: Received response:', response);
     
     // Parse the response data

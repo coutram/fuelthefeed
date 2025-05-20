@@ -1,7 +1,7 @@
 "use client";
 import { useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react';
-import { createUser, getUserByWalletId } from '../api';
+import { createUser } from '../api';
 import { useRouter } from 'next/navigation';
 import { Suspense } from 'react';
 import { useWalletWithRetry } from '../hooks/useWalletWithRetry';
@@ -9,77 +9,54 @@ import { useWalletWithRetry } from '../hooks/useWalletWithRetry';
 function CreateUserForm() {
   const searchParams = useSearchParams()
   const router = useRouter();
-  const [user, setUser] = useState(null);
+  const { account } = useWalletWithRetry();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const { connected, account, retryConnect } = useWalletWithRetry();
   const walletId = searchParams.get('walletId');
 
-  // Handle wallet connection
-  useEffect(() => {
-    if (!connected) {
-      console.log('Wallet not connected, attempting to connect...');
-      retryConnect();
-    }
-  }, [connected, retryConnect]);
-
-  // Fetch user data
-  useEffect(() => {
-    async function fetchUser() {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        // Use walletId from URL params if account address is not available
-        const addressToUse = account?.address || walletId;
-        
-        if (!addressToUse) {
-          console.log('No wallet address available');
-          setIsLoading(false);
-          return;
-        }
-
-        console.log('Fetching user for wallet:', addressToUse);
-        const response = await getUserByWalletId(addressToUse);
-        console.log('Received user data:', response);
-
-        if (response?.status === 'success' && response?.data) {
-          console.log('Setting user data:', response.data);
-          setUser(response.data);
-          
-          // Only redirect if we have a valid user with a role
-          if (response.data.role) {
-            if (response.data.role === 'creator') {
-              router.push('/creator-dashboard');
-            } else if (response.data.role === 'brand') {
-              router.push('/dashboard');
-            }
-          }
-        } else {
-          console.log('No user data found for wallet:', addressToUse);
-          setUser(null);
-        }
-      } catch (e) {
-        console.error('Error fetching user:', e);
-        setError(e.message);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchUser();
-  }, [router, account?.address, walletId]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const checkConnection = async () => {
     try {
-      const formData = new FormData(e.target);
+      if (!account?.address && !walletId) {
+        throw new Error('No wallet address available');
+      }
+      setIsLoading(false);
+    } catch (err: Error | unknown) {
+      console.error('Connection error:', err);
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    checkConnection();
+  }, [account, walletId]);
+
+  const retryConnect = () => {
+    setIsLoading(true);
+    setError(null);
+    checkConnection();
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      console.log('Account:', account);
+      console.log('WalletId from URL:', walletId);
+      
+      const formData = new FormData(e.target as HTMLFormElement);
       const addressToUse = account?.address || walletId;
+      
+      console.log('Address to use:', addressToUse);
+      console.log('Address type:', typeof addressToUse);
+      console.log('Is Uint8Array:', addressToUse instanceof Uint8Array);
+      console.log('Address properties:', Object.keys(addressToUse || {}));
       
       if (!addressToUse) {
         throw new Error('No wallet address available');
@@ -89,11 +66,18 @@ function CreateUserForm() {
         firstName,
         lastName,
         email,
-        walletId: addressToUse,
+        walletId: walletId,
         role: formData.get('role'),
+        interests: [], // Initialize empty interests array
+        socialLinks: {
+          twitter: '',
+          instagram: '',
+          tiktok: '',
+          youtube: ''
+        }
       };
 
-      console.log('Creating user with data:', userData);
+      console.log('Creating user with data:', JSON.stringify(userData, null, 2));
       await createUser(userData);
       
       if (userData.role === 'creator') {
@@ -101,9 +85,11 @@ function CreateUserForm() {
       } else {
         router.push('/dashboard');
       }
-    } catch (error) {
+    } catch (error: Error | unknown) {
       console.error('Failed to create user:', error);
-      setError(error.message);
+      setError(error instanceof Error ? error.message : 'Failed to create user. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -147,7 +133,8 @@ function CreateUserForm() {
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
           required
-          className="border p-2 mb-4 w-full"
+          disabled={isSubmitting}
+          className="border p-2 mb-4 w-full disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
         <input
           type="text"
@@ -155,7 +142,8 @@ function CreateUserForm() {
           value={lastName}
           onChange={(e) => setLastName(e.target.value)}
           required
-          className="border p-2 mb-4 w-full"
+          disabled={isSubmitting}
+          className="border p-2 mb-4 w-full disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
         <input
           type="email"
@@ -163,7 +151,8 @@ function CreateUserForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="border p-2 mb-4 w-full"
+          disabled={isSubmitting}
+          className="border p-2 mb-4 w-full disabled:bg-gray-100 disabled:cursor-not-allowed"
         />
         <div>
           <label htmlFor="role" className="block text-sm font-semibold text-gray-700 mb-1">
@@ -173,7 +162,8 @@ function CreateUserForm() {
             id="role"
             name="role"
             required
-            className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500 transition"
+            disabled={isSubmitting}
+            className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500 transition disabled:bg-gray-100 disabled:cursor-not-allowed"
             defaultValue=""
           >
             <option value="" disabled>Select a role</option>
@@ -182,8 +172,24 @@ function CreateUserForm() {
           </select>
           <p className="text-xs text-gray-400 mt-1">Choose whether this user is a brand or a creator.</p>
         </div>
-        <button type="submit" className="bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg transition mt-4 w-full">
-          Create Account
+        <button 
+          type="submit" 
+          disabled={isSubmitting}
+          className={`bg-pink-500 hover:bg-pink-600 text-white font-bold py-3 px-6 rounded-lg transition mt-4 w-full flex items-center justify-center ${
+            isSubmitting ? 'opacity-75 cursor-not-allowed' : ''
+          }`}
+        >
+          {isSubmitting ? (
+            <>
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Creating Account...
+            </>
+          ) : (
+            'Create Account'
+          )}
         </button>
       </form>
     </div>
