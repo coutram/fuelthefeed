@@ -144,7 +144,8 @@ export const createCampaign = async (campaignData) => {
 };
 
 export const getAllCampaigns = async () => {
-  return await apiFetch(CAMPAIGN_API_URL);
+  const response = await apiFetch(CAMPAIGN_API_URL);
+  return response.json();
 };
 
 export const getCampaignById = async (id) => {

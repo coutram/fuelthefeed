@@ -15,9 +15,17 @@ export default function CreatorExplore({ handleApply }: CreatorExploreProps) {
 
   useEffect(() => {
     async function fetchCampaigns() {
-      const campaigns = await getAllCampaigns();
-      setAllCampaigns(campaigns);
-      setLoading(false);
+      try {
+        const response = await getAllCampaigns();
+        console.log('Campaigns response:', response);
+        const campaigns = Array.isArray(response) ? response : [];
+        setAllCampaigns(campaigns);
+      } catch (error) {
+        console.error('Error fetching campaigns:', error);
+        setAllCampaigns([]);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchCampaigns();
   }, []);

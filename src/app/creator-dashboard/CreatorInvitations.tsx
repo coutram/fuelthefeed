@@ -17,9 +17,16 @@ function CreatorInvitations({ user, handleApply }: CreatorInvitationsProps) {
 
   useEffect(() => {
     async function fetchInvitedCampaigns() {
-      const campaigns = await getInvitedCampaigns(user.walletId);
-      setInvitedCampaigns(campaigns);
-      setLoading(false);
+      try {
+        const response = await getInvitedCampaigns(user.walletId);
+        const campaigns = Array.isArray(response) ? response : [];
+        setInvitedCampaigns(campaigns);
+      } catch (error) {
+        console.error('Error fetching invited campaigns:', error);
+        setInvitedCampaigns([]);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchInvitedCampaigns();
   }, [user.walletId]);
