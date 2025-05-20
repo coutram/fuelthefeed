@@ -132,7 +132,7 @@ export default function CreatorDashboard() {
         )}
 
         {activeTab === 'explore' && (
-          <CreatorExplore handleApply={handleApply} />
+          <CreatorExplore handleApply={handleApply} user={user} />
         )}
 
       </div>
