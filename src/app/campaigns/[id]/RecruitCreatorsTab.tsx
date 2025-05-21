@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-
+import Image from 'next/image';
 type Props = {
   twitterPost: string;
 };
@@ -24,7 +24,7 @@ export default function RecruitCreatorsTab({ twitterPost }: Props) {
             onClick={() => setRecruitOption('social')}
             className="flex flex-col items-center justify-center bg-white rounded-xl shadow-lg p-8 hover:shadow-2xl transition border-2 border-transparent hover:border-pink-400"
           >
-            <img src="/twitter-x-logo.png" alt="Twitter/X" className="w-16 h-16 mb-4" />
+            <Image src="/twitter-x-logo.png" alt="Twitter/X" className="w-16 h-16 mb-4" />
             <span className="text-xl font-bold text-pink-600 mb-2">Post to Socials</span>
             <span className="text-gray-500 text-center">Share your campaign on Twitter/X to attract creators.</span>
           </button>
@@ -32,7 +32,7 @@ export default function RecruitCreatorsTab({ twitterPost }: Props) {
             onClick={() => setRecruitOption('email')}
             className="flex flex-col items-center justify-center bg-white rounded-xl shadow-lg p-8 hover:shadow-2xl transition border-2 border-transparent hover:border-blue-400"
           >
-            <img src="/email-illustration.png" alt="Email" className="w-16 h-16 mb-4" />
+            <Image src="/email-illustration.png" alt="Email" className="w-16 h-16 mb-4" />
             <span className="text-xl font-bold text-blue-600 mb-2">Email Creators</span>
             <span className="text-gray-500 text-center">Send a personalized campaign invite to selected creators.</span>
           </button>
@@ -41,7 +41,7 @@ export default function RecruitCreatorsTab({ twitterPost }: Props) {
 
       {recruitOption === 'social' && (
         <div className="w-full max-w-xl bg-white rounded-xl shadow-lg p-8 mt-8 flex flex-col items-center">
-          <img src="/twitter-x-logo.png" alt="Twitter/X" className="w-12 h-12 mb-4" />
+          <Image src="/twitter-x-logo.png" alt="Twitter/X" className="w-12 h-12 mb-4" />
           <h3 className="text-lg font-bold mb-2">Share this on Twitter/X</h3>
           <pre className="bg-gray-100 rounded p-4 w-full text-sm text-gray-800 mb-4 whitespace-pre-wrap break-words">
             {twitterPost}
@@ -63,7 +63,7 @@ export default function RecruitCreatorsTab({ twitterPost }: Props) {
 
       {recruitOption === 'email' && (
         <div className="w-full max-w-xl bg-white rounded-xl shadow-lg p-8 mt-8 flex flex-col items-center">
-          <img src="/email-illustration.png" alt="Email" className="w-12 h-12 mb-4" />
+          <Image src="/email-illustration.png" alt="Email" className="w-12 h-12 mb-4" />
           <h3 className="text-lg font-bold mb-2">Invite Creators by Email</h3>
           <div className="w-full mb-4">
             <div className="flex flex-wrap gap-2 mb-2">

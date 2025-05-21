@@ -15,11 +15,14 @@ export default function CreatorDashboard() {
   const { account, connected } = useWallet();
   const [user, setUser] = useState<User | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [allCampaigns, setAllCampaigns] = useState<Campaign[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
   const [notification, setNotification] = useState<string | null>(null);
   const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('info');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [applyStatus, setApplyStatus] = useState<{ [campaignId: string]: 'idle' | 'loading' | 'success' | 'error' | 'applied' }>({});
 
   useEffect(() => {

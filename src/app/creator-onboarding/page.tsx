@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 // import { useWallet } from '@aptos-labs/wallet-adapter-react';
 import { useWalletWithRetry } from '../hooks/useWalletWithRetry';
@@ -50,9 +50,9 @@ export default function CreatorOnboarding() {
       });
 
       router.push('/creator-socials');
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error saving interests:', err);
-      setError(err.message || 'Failed to save interests');
+      setError(err instanceof Error ? err.message : 'Failed to save interests');
     } finally {
       setIsSubmitting(false);
     }
@@ -67,7 +67,7 @@ export default function CreatorOnboarding() {
           </div>
           <div>
             <h1 className="text-3xl font-bold mb-1">What are your interests?</h1>
-            <p className="text-gray-500">We'll use this to help customize your experience.</p>
+            <p className="text-gray-500">We&apos;ll use this to help customize your experience.</p>
           </div>
         </div>
         <form onSubmit={handleSubmit}>

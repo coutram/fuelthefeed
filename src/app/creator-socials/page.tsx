@@ -48,9 +48,9 @@ export default function CreatorSocials() {
       setTimeout(() => {
         router.push('/creator-dashboard');
       }, 1500);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error saving Twitter handle:', err);
-      setError(err.message || 'Failed to save Twitter handle');
+      setError(err instanceof Error ? err.message : 'Failed to save Twitter handle');
     } finally {
       setIsSubmitting(false);
     }

@@ -1,5 +1,5 @@
 // hooks/useWalletWithRetry.ts
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useWallet } from '@aptos-labs/wallet-adapter-react'; // Adjust the import based on your library
 import { setAccount } from '../utils/accountManager';
 
@@ -10,14 +10,8 @@ export const useWalletWithRetry = () => {
   const { connect, connected, account, disconnect } = useWallet();
   const [isConnecting, setIsConnecting] = useState(false);
 
-  useEffect(() => {
-    // Attempt to connect wallet on mount if not already connected
-    if (!connected && !isConnecting) {
-      retryConnect();
-    }
-  }, []);
-
-  const retryConnect = async () => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const retryConnect = useCallback(async () => {
     setIsConnecting(true);
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       try {
@@ -36,7 +30,15 @@ export const useWalletWithRetry = () => {
     }
     setIsConnecting(false);
     return null;
-  };
+  });
 
+  useEffect(() => {
+    // Attempt to connect wallet on mount if not already connected
+    if (!connected && !isConnecting) {
+      retryConnect();
+    }
+  }, [retryConnect, connected, isConnecting, account, connect]);
+
+  console.log('retryConnect', retryConnect);
   return { retryConnect, isConnecting, connected, account, disconnect };
 };

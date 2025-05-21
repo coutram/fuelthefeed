@@ -6,7 +6,6 @@ import React, { useState, useEffect } from 'react';
 import Modal from '../components/Modal';
 import CreateCampaignForm from '../components/CreateCampaignForm';
 import { getAllCampaigns, getUserByWalletId } from '../api';
-import { useRouter } from 'next/navigation';
 import { Campaign } from '../types/Campaign';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { User } from '../types/User';
@@ -28,9 +27,9 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
-  const [notificationType, setNotificationType] = useState<'success' | 'error' | 'info'>('info');
+  const [notificationType] = useState<'success' | 'error' | 'info'>('info');
   const [loadingUser, setLoadingUser] = useState(true);
-  const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [user, setUser] = useState<User | null>(null);
 
   const handleOpenModal = () => setIsModalOpen(true);

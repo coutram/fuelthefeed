@@ -9,7 +9,7 @@ import { useWalletWithRetry } from '../hooks/useWalletWithRetry';
 function CreateUserForm() {
   const searchParams = useSearchParams()
   const router = useRouter();
-  const { account } = useWalletWithRetry();
+  const { account, retryConnect } = useWalletWithRetry();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -18,28 +18,25 @@ function CreateUserForm() {
   const [email, setEmail] = useState('');
   const walletId = searchParams.get('walletId');
 
-  const checkConnection = async () => {
-    try {
-      if (!account?.address && !walletId) {
-        throw new Error('No wallet address available');
-      }
-      setIsLoading(false);
-    } catch (err: Error | unknown) {
-      console.error('Connection error:', err);
-      setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      setIsLoading(false);
-    }
-  };
+
 
   useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        if (!account?.address && !walletId) {
+          throw new Error('No wallet address available');
+        }
+        setIsLoading(false);
+      } catch (err: Error | unknown) {
+        console.error('Connection error:', err);
+        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        setIsLoading(false);
+      }
+    };
+
     checkConnection();
   }, [account, walletId]);
 
-  const retryConnect = () => {
-    setIsLoading(true);
-    setError(null);
-    checkConnection();
-  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

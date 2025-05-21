@@ -46,7 +46,7 @@ function WalletConnectContent() {
       }
     }
     fetchUser();
-  }, [connected, account]);
+  }, [connected, account, router, user]);
   
 
   useEffect(() => {
